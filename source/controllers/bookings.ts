@@ -10,6 +10,11 @@ interface Booking {
     numberOfNights: number;
 }
 
+interface ExtendStay {
+    bookingID: number;
+    addNights: number;
+}
+
 const getBookingCheckOutDate = (booking: Booking) => {
     const { checkInDate, numberOfNights } = booking;
     const checkIn = new Date(checkInDate);
@@ -45,6 +50,53 @@ const createBooking = async (req: Request, res: Response, next: NextFunction) =>
     return res.status(200).json(bookingResult);
 }
 
+const extendStays = async (req: Request, res: Response, next: NextFunction) => {
+    const extendStay: ExtendStay = req.body;
+
+    const booking = await getBookingById(extendStay.bookingID);
+
+    if (!booking) {
+        return res.status(400).json('Impossible to extend Stay, wrong booking ID');
+    }
+
+    const bookingCheckOut = getBookingCheckOutDate(booking);
+
+    /**
+     * we need to check if date range
+     * from checkInDate + 1 day
+     * to checkInDate + numberOfNights + addNights
+     * is not booken by other guests
+     */
+    const checkIfUnitIsNotFree = await checkIfUnitBookenOnGivenDates(
+        new Date(new Date(bookingCheckOut).getTime() + 1 * MsInOneDay),
+        new Date(new Date(bookingCheckOut).getTime() + extendStay.addNights * MsInOneDay),
+        booking.unitID,
+    );
+
+    if(checkIfUnitIsNotFree) {
+        return res.status(400).json('Unit is booken on given dates');
+    }
+
+    let extendStayResult = await prisma.booking.update({
+        where: {
+            id: extendStay.bookingID
+        },
+        data: {
+             numberOfNights: booking.numberOfNights + extendStay.addNights,
+       }
+    })
+
+    return res.status(200).json(extendStayResult);
+}
+
+const getBookingById = async (bookingId: number) => {
+    return prisma.booking.findFirst({
+        where: {
+            id: bookingId,
+        }
+    })
+}
+
 type bookingOutcome = {result:boolean, reason:string};
 
 async function isBookingPossible(booking: Booking): Promise<bookingOutcome> {
@@ -78,8 +130,28 @@ async function isBookingPossible(booking: Booking): Promise<bookingOutcome> {
     }
 
     // check 3 : Unit is available for the range from check-in to check-out dates
-    const startDate = new Date(booking.checkInDate).getTime();
-    const endDate = getBookingCheckOutDate(booking).getTime();
+    const isUnitAvailableOnCheckInDate = await checkIfUnitBookenOnGivenDates(
+        new Date(booking.checkInDate),
+        getBookingCheckOutDate(booking),
+        booking.unitID,
+        );
+
+    if (isUnitAvailableOnCheckInDate) {
+        return {result: false, reason: "For the given check-in date, the unit is already occupied"};
+    }
+
+    return {result: true, reason: "OK"};
+}
+
+async function checkIfUnitBookenOnGivenDates(checkIn: Date, checkOut: Date, unitID: string): Promise<Boolean> {
+    console.log(
+        checkIn,
+        checkOut,
+        unitID,
+        '==='
+    )
+    const startDate = checkIn.getTime();
+    const endDate = checkOut.getTime();
 
     const sql = `
     SELECT *
@@ -92,9 +164,9 @@ async function isBookingPossible(booking: Booking): Promise<bookingOutcome> {
         )
     `;
 
-    let isUnitAvailableOnCheckInDate: Booking[] = await prisma.$queryRawUnsafe(
+    const isUnitBooked: Booking[] = await prisma.$queryRawUnsafe(
         sql,
-        booking.unitID,
+        unitID,
         startDate,
         endDate,
         startDate,
@@ -102,12 +174,7 @@ async function isBookingPossible(booking: Booking): Promise<bookingOutcome> {
         endDate,
         MsInOneDay,
     );
-
-    if (isUnitAvailableOnCheckInDate.length > 0) {
-        return {result: false, reason: "For the given check-in date, the unit is already occupied"};
-    }
-
-    return {result: true, reason: "OK"};
+    return Boolean(isUnitBooked.length > 0)
 }
 
-export default { healthCheck, createBooking }
+export default { healthCheck, createBooking, extendStays }

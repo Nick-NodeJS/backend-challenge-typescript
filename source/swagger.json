@@ -1,1 +1,137 @@
-{"openapi":"3.0.1","info":{"title":"OpenAPI definition","version":"v0"},"servers":[{"url":"http://localhost:8000","description":"Generated server url"}],"paths":{"/api/v1/booking":{"post":{"tags":["booking-controller"],"operationId":"createBooking","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/BookingInput"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"object"}}}}}}},"/":{"get":{"tags":["booking-controller"],"operationId":"helloWorld","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/HealthResponse"}}}}}}}},"components":{"schemas":{"BookingInput":{"type":"object","properties":{"guestName":{"type":"string"},"unitID":{"type":"string"},"checkInDate":{"type":"string","format":"date"},"numberOfNights":{"type":"integer","format":"int32"}}},"HealthResponse":{"type":"object","properties":{"message":{"type":"string"}}}}}}
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/v1/extendStay": {
+      "post": {
+        "tags": [
+          "booking-controller"
+        ],
+        "operationId": "extendStays",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendStaysInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/booking": {
+      "post": {
+        "tags": [
+          "booking-controller"
+        ],
+        "operationId": "createBooking",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "booking-controller"
+        ],
+        "operationId": "helloWorld",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExtendStaysInput": {
+        "type": "object",
+        "properties": {
+          "bookingID": {
+            "type": "number"
+          },
+          "addNights": {
+            "type": "number"
+          }
+        }
+      },
+      "BookingInput": {
+        "type": "object",
+        "properties": {
+          "guestName": {
+            "type": "string"
+          },
+          "unitID": {
+            "type": "string"
+          },
+          "checkInDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "numberOfNights": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

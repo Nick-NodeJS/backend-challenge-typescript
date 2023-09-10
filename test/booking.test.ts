@@ -152,4 +152,57 @@ describe('Booking API', () => {
         expect(response2.data.unitID).toBe(GUEST_B_UNIT_1.unitID);
         expect(response2.data.numberOfNights).toBe(GUEST_B_UNIT_1.numberOfNights);
     });
+    test('Extend guest stay in unit if it is free', async () => {
+        // Create first booking
+        const response1 = await axios.post('http://localhost:8000/api/v1/booking', GUEST_A_UNIT_1);
+        expect(response1.status).toBe(200);
+        expect(response1.data.guestName).toBe(GUEST_A_UNIT_1.guestName);
+
+        // try to extend Stay of GUEST_A_UNIT_1 on 3 days
+        const addNights = 3
+        const response2 = await axios.post('http://localhost:8000/api/v1/extendStay', {
+                bookingID: response1.data.id,
+                addNights,
+            });
+
+        expect(response2.status).toBe(200);
+        expect(response2.data.guestName).toBe(GUEST_A_UNIT_1.guestName);
+        expect(response2.data.unitID).toBe(GUEST_A_UNIT_1.unitID);
+        expect(response2.data.numberOfNights).toBe(GUEST_A_UNIT_1.numberOfNights + addNights);
+    });
+    test('Do not extend guest stay in unit if it is not free', async () => {
+        // Create first booking
+        const response1 = await axios.post('http://localhost:8000/api/v1/booking', GUEST_A_UNIT_1);
+        expect(response1.status).toBe(200);
+        expect(response1.data.guestName).toBe(GUEST_A_UNIT_1.guestName);
+
+        // Create next booking by other guest
+        const response2 = await axios.post(
+            'http://localhost:8000/api/v1/booking',
+            {
+                ...GUEST_B_UNIT_1,
+                checkInDate: new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000),
+            },
+            );
+        expect(response2.status).toBe(200);
+        expect(response2.data.guestName).toBe(GUEST_B_UNIT_1.guestName);
+
+        // try to extend Stay of GUEST_A_UNIT_1 on 3 days
+        let error: any;
+        try {
+            await axios.post(
+                'http://localhost:8000/api/v1/extendStay',
+                {
+                    bookingID: response1.data.id,
+                    addNights: 3,
+                },
+                );
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toBeInstanceOf(AxiosError);
+        expect(error.response.status).toBe(400);
+        expect(error.response.data).toEqual('Unit is booken on given dates');
+    });
 });
