@@ -8,5 +8,7 @@
         "target": "es6",
         "skipLibCheck": true,
         "strict": true
-    }
+    },
+    "include": ["source/**/*"],
+    "exclude": ["node_modules", "build", "coverage", "test", "**/*.test.ts"]
 }
