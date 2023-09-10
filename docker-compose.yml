@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: openapi-app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: file:./app.db # Set your DATABASE_URL here
+    volumes:
+      - .:/app
